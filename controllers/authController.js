@@ -1,3 +1,4 @@
+const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('./../models/userModel');
@@ -16,6 +17,7 @@ exports.registerUser = async (req, res) => {
       email: req.body.email,
       password: req.body.password,
       passwordConfirm: req.body.passwordConfirm,
+      passwordChangedAt: req.body.passwordChangedAt,
     });
 
     // JWT: Signing a token with
@@ -71,4 +73,45 @@ exports.login = async (req, res, next) => {
     status: 'Success',
     token,
   });
+};
+
+exports.protect = async (req, res, next) => {
+  // Getting token and check of it's there
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+  // console.log(token);
+
+  if (!token) {
+    return next({
+      status: 401,
+      error: "You're not logged in",
+    });
+  }
+
+  // verify the Verification token
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  // console.log(decoded);
+
+  // check if user still exists
+  const freshUser = await User.findById(decoded.id);
+  if (!freshUser) {
+    return next(
+      JSON.stringify({
+        status: 401,
+        error: 'User no longer exixts',
+      })
+    );
+  }
+
+  // check if user changed password after the jwt was issued
+  // if (freshUser.changedPasswordAfter(decoded.iat)) {
+  // return next(new )
+  // }
+
+  next();
 };

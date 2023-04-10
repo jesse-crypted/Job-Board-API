@@ -32,8 +32,7 @@ const userSchema = new Schema({
       message: 'Passwords do not match',
     },
   },
-  resume: String, // String is shorthand for {type: String}
-  tokens: [{ type: Object }],
+  passwordChangedAt: Date,
 });
 
 // Implement encryption
@@ -58,6 +57,20 @@ userSchema.methods.correctPassword = async function (
   // candidatePassword is the hashed password
   // userPassword is the password from the requesy body at login
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+// Another instance method
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    console.log(changedTimestamp, JWTTimestamp);
+    return JWTTimestamp < changedTimestamp;
+  }
+  // False means not changed i.e the password has not been changed
+  return false;
 };
 
 // create a new Mongoose model based on the User schema

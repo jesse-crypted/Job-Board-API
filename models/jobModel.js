@@ -12,7 +12,7 @@ const jobSchema = new Schema({
   location: { type: String, required: [true, 'A job must have a location'] },
   salary: { type: Number, required: [true, 'A job must have a salary'] },
   employer: { type: String, required: [true, 'A job must have an employer'] },
-  applicants: [id],
+  applicants: String,
 });
 
 // create a new Mongoose model based on the Job schema
